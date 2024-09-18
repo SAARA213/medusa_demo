@@ -1,43 +1,37 @@
-name: Deploy EC2 and Medusa
+name: Deploy to Amazon EC2
 
 on:
   push:
     branches:
       - main
 
+env:
+  EC2_INSTANCE_IP: 13.201.47.161       # Set this to your EC2 instance's public IP address
+  EC2_USER: ubuntu                            # Set this to the EC2 username, e.g., ec2-user for Amazon Linux
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Store your EC2 SSH private key in GitHub secrets
+  DOCKER_IMAGE: medusa   # Replace with the Docker Hub image name
+  DOCKER_IMAGE_TAG: latest                    # Set this to the image tag, e.g., latest
+  COMPOSE_FILE_PATH: ./docker-compose.yml     # Set this to the path of your Docker Compose file
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.3.0
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+      - name: Transfer Docker Compose file to EC2
+        run: scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.COMPOSE_FILE_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }}:/home/${{ env.EC2_USER }}/docker-compose.yml
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        working-directory: ./terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Install SSH Client
-        run: sudo apt-get install -y sshpass
-
-      - name: Add SSH Key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-       - name: Deploy to EC2 via SSH
+      - name: Deploy to EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
             # Pull the latest Docker image from Docker Hub
