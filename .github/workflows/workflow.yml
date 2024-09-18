@@ -22,7 +22,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@65.0.91.8 '
+          ssh -o StrictHostKeyChecking=no ubuntu@15.206.172.13 '
           cd /home/ubuntu/medusa_demo || git clone https://github.com/SAARA213/medusa_demo.git /home/ubuntu/medusa_demo
           cd /home/ubuntu/medusa_demo
           git pull
