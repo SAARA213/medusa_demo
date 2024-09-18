@@ -29,28 +29,21 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Get EC2 IP Address
-        id: get-ip
-        run: echo "EC2_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
-        working-directory: ./terraform
+      - name: Install SSH Client
+        run: sudo apt-get install -y sshpass
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t your-dockerhub-username/medusa .
-          docker push your-dockerhub-username/medusa
-
-      - name: Deploy Medusa on EC2
-        uses: appleboy/ssh-action@v0.1.8
+      - name: Add SSH Key
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          host: ${{ env.EC2_IP }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            docker pull your-dockerhub-username/medusa
-            docker-compose up -d
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} '
+          cd /home/ubuntu/EC2Deploy || git clone https://github.com/SlayerK15/EC2Deploy.git /home/ubuntu/EC2Deploy
+          cd /home/ubuntu/EC2Deploy
+          git pull
+          docker-compose down
+          docker-compose up -d --build
+          '
 
