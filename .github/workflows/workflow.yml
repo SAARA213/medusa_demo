@@ -23,9 +23,26 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@15.206.172.13 '
-          cd /home/ubuntu/medusa_demo || git clone https://github.com/SAARA213/medusa_demo.git /home/ubuntu/medusa_demo
-          cd /home/ubuntu/medusa_demo
-          git pull
-          docker-compose down
-          docker-compose up -d --build
+          # Navigate to the app directory
+          cd /home/ubuntu/my-medusa_demo &&
+          
+          # Pull the latest code
+          git pull origin main &&
+
+          # Step 3: Install PM2 globally if it's not already installed
+          sudo npm install pm2@latest -g &&
+          
+          # Reinstall dependencies if needed
+          npm install &&
+          
+          # Ensure PostgreSQL is running
+          sudo systemctl start postgresql &&
+          
+          # Run migrations if required
+          npx medusa migrations run &&
+          
+          # Build and restart the Medusa app
+          npm run build &&
+          pm2 restart medusa-app || pm2 start npm --name 'medusa-app' -- start
+          "
           '    
