@@ -37,13 +37,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Deploy to EC2
+       - name: Deploy to EC2 via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} '
-          cd /home/ubuntu/EC2Deploy || git clone https://github.com/SlayerK15/EC2Deploy.git /home/ubuntu/EC2Deploy
-          cd /home/ubuntu/EC2Deploy
-          git pull
-          docker-compose down
-          docker-compose up -d --build
-          '
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
+            # Pull the latest Docker image from Docker Hub
+            sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
 
+            # Stop existing containers if running, then run Docker Compose
+            sudo docker-compose down || true
+            sudo docker-compose up -d
+          EOF
