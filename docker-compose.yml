@@ -10,15 +10,15 @@ services:
       - postgres
 
     environment:
-      DATABASE_URL: postgres://postgres:123@postgres:5432/medusa_store_db
+      DATABASE_URL: postgres://postgres:supersecret@localhost:5432/medusa_db
 
 
   postgres:
     image: postgres:14
     environment:
-      POSTGRES_DB: medusa_store_db
+      POSTGRES_DB: medusa_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
+      POSTGRES_PASSWORD: supersecret
     volumes:
       - pg_data:/var/lib/postgresql/data
 
