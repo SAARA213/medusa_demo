@@ -22,7 +22,7 @@ jobs:
 
        - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.235.31.64 '
+          ssh -o StrictHostKeyChecking=no ubuntu@15.206.172.13 '
           cd /home/ubuntu/EC2Deploy || git clone https://github.com/SlayerK15/EC2Deploy.git /home/ubuntu/EC2Deploy
           cd /home/ubuntu/EC2Deploy
           git pull
