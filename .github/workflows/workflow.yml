@@ -28,9 +28,6 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-      - name: Transfer Docker Compose file to EC2
-        run: scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.COMPOSE_FILE_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }}:/home/${{ env.EC2_USER }}/docker-compose.yml
-
       - name: Deploy to EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
