@@ -1,40 +1,31 @@
-name: Deploy to Amazon EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main
-
-env:
-  EC2_INSTANCE_IP: 65.2.130.175      # Set this to your EC2 instance's public IP address
-  EC2_USER: ubuntu                            # Set this to the EC2 username, e.g., ec2-user for Amazon Linux
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Store your EC2 SSH private key in GitHub secrets
-  DOCKER_IMAGE: medusa   # Replace with the Docker Hub image name
-  DOCKER_IMAGE_TAG: latest                    # Set this to the image tag, e.g., latest
-  COMPOSE_FILE_PATH: ./docker-compose.yml     # Set this to the path of your Docker Compose file
+      - main  
 jobs:
   deploy:
-    name: Deploy to EC2
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
-      - name: Deploy to EC2 via SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
-            # Pull the latest Docker image from Docker Hub
-            sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
+      - name: Install SSH Client
+        run: sudo apt-get install -y sshpass
 
-            # Stop existing containers if running, then run Docker Compose
-            sudo docker-compose down || true
-            sudo docker-compose up -d
-          EOF
+      - name: Add SSH Key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@13.235.31.64 '
+          cd /home/ubuntu/medusa_demo || git clone https://github.com/SAARA213/medusa_demo.git /home/ubuntu/medusa_demo
+          cd /home/ubuntu/medusa_demo
+          git pull
+          docker-compose down
+          docker-compose up -d --build
+          '    
