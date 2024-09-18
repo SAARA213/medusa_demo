@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy EC2 and Medusa
 
 on:
   push:
@@ -20,20 +20,37 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: ./terraform
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Deploy Medusa
+      - name: Get EC2 IP Address
+        id: get-ip
+        run: echo "EC2_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
+        working-directory: ./terraform
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t your-dockerhub-username/medusa .
+          docker push your-dockerhub-username/medusa
+
+      - name: Deploy Medusa on EC2
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP }}
+          host: ${{ env.EC2_IP }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             docker pull your-dockerhub-username/medusa
             docker-compose up -d
+
+
 
