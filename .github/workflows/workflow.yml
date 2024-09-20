@@ -22,6 +22,15 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@15.206.172.13 '
+          ssh -o StrictHostKeyChecking=no ubuntu@35.154.168.61 '
+          cd /home/ubuntu/medusa_demo || git clone https://github.com/SAARA213/Medusa_Workflow.git /home/ubuntu/medusa_demo
+          cd /home/ubuntu/medusa_demo
+          git pull
+          docker-compose down
+          docker-compose up -d --build
+          '
+                   
+          
+        
          
           '
